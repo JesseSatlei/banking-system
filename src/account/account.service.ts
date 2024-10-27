@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountRepository } from './account.repository';
 import { AccountResponseDto } from './dto/account-response.dto';
+import { Account } from './account.entity';
 
 @Injectable()
 export class AccountService {
@@ -12,15 +13,16 @@ export class AccountService {
     private readonly accountRepository: AccountRepository
   ) {}
 
-  async createOrUpdateAccount(accountNumber: number, balance: number): Promise<AccountResponseDto> {
+  async createOrUpdateAccount(accountNumber: number, balance: number): Promise<Account> {
     let account;
     try {
       account = await this.accountRepository.findByAccountNumber(accountNumber);
       if (!account) {
-        account = this.accountRepository.create({ accountNumber, balance });
+        account = this.accountRepository.createAccount({ accountNumber, balance });
         this.logger.log(`Creating new account: ${accountNumber}`);
+        return account;
       }
-      return { accountNumber: account.accountNumber, balance: account.balance };
+      return account;
     } catch (error) {
       this.logger.error(`Error creating/updating account ${accountNumber}: ${error.message}`);
       throw error;

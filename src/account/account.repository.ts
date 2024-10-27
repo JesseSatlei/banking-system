@@ -1,6 +1,7 @@
 import { Repository } from 'typeorm';
 import { Account } from './account.entity';
 import { InjectRepository } from '@nestjs/typeorm';
+import { AccountRequestDto } from './dto/account-request.dto';
 
 export class AccountRepository extends Repository<Account> {
   constructor(
@@ -14,6 +15,10 @@ export class AccountRepository extends Repository<Account> {
     );
   }
 
+  async createAccount(accountRequestDto: AccountRequestDto): Promise<Account> {
+    const account = this.accountRepository.create(accountRequestDto);
+    return this.save(account);
+  }
 
   async findByAccountNumber(accountNumber: number): Promise<Account | null> {
     return this.findOne({ where: { accountNumber } });

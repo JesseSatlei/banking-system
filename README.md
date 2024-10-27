@@ -1,73 +1,111 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+## Backend - Wefit
+Teste de backend da Wefit.
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+### Pré-requisitos
+Ter instalado e configurado o Docker e Node.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Para acessar qualquer rota da aplicação, é necessário incluir um token de autorização no cabeçalho da solicitação. Você pode configurar este token no arquivo .env usando a variável AUTH_TOKEN.
 
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Installation
+### Iniciando o banco de dados
+Para iniciar o banco de dados MySQL, execute o seguinte comando na raiz do projeto:
 
 ```bash
-$ npm install
+docker-compose up -d
 ```
 
-## Running the app
+Isso criará um container MySQL que você poderá acessar via localhost:3306. Use o usuário root e a senha senha_root_123 para fazer login.
+
+### Instalando as bibliotecas
+```bash
+npm install
+```
+### Iniciando o Servidor
+Execute um dos seguintes comandos na raiz do projeto:
+```bash
+npm run start:dev
+# ou
+yarn start:dev
+```
+
+### Bibliotecas utilizadas
+* cors: Middleware que permite requisições de origens diferentes.
+* swagger: Ferramentas para gerar documentação Swagger para a API.
+* typeorm: ORM (Object-Relational Mapping) para Node.js.
+* mysql: Driver MySQL para Node.js.
+
+
+### Utilizando as rotas
+Para utilizar as rotas da API, você pode utilizar uma ferramenta como o Postman ou o Swagger UI. A documentação Swagger da API está disponível em /api.
+
+### A API possui as seguintes rotas:
+Foram criadas diversas rotas para a criação do usuário como findOne, findAll, Create, Delete e Update, mas a principal para o desafio é a seguinte:
+
+http://localhost:3000/transactions/batch
+
+Para ela, será necessário passar o seguinte JSON:
 
 ```bash
-# development
-$ npm run start
+{
+  "accounts": [
+    {
+      "accountNumber": 1234,
+      "balance": 500
+    },
+    {
+      "accountNumber": 4567,
+      "balance": 1000
+    }
+  ],
+  "transactions": [
+    {
+      "type": "transfer",
+      "originAccount": 1234,
+      "destinationAccount": 4567,
+      "amount": 200
+    },
+    {
+      "type": "withdraw",
+      "originAccount": 4561,
+      "amount": 50
+    }
+  ]
+}
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
 ```
+Onde foi criado a seguinte regra, cada objeto seria uma requisição independente da outra, então caso uma falhe a outra prosseguirá com a solicitação e no final será retornado quais transações tiveram erro.
+Uma regra adotada é que no array de Accounts, caso a conta não exista no banco de dados, ela é criada.
 
-## Test
+No exemplo fornecido acima, você receberá o seguinte retorno já que a conta não exista para o withdraw:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+{
+    "processedAccounts": [
+        {
+            "accountNumber": 1234,
+            "balance": 500,
+            "id": 3
+        },
+        {
+            "accountNumber": 4567,
+            "balance": 1000,
+            "id": 4
+        }
+    ],
+    "processedTransactions": [
+        {
+            "type": "transfer",
+            "originAccount": 1234,
+            "destinationAccount": 4567,
+            "amount": 200,
+            "id": 13,
+            "date": "2024-10-27T16:41:37.754Z"
+        }
+    ],
+    "errors": [
+        {
+            "accountNumber": 4561,
+            "error": "Account not found"
+        }
+    ]
+}
 ```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).

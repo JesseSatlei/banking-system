@@ -16,7 +16,6 @@ export class TransactionRepository extends Repository<Transaction> {
   }
 
   async createTransaction(transactionDto: TransactionRequestDto): Promise<Transaction> {
-    console.log(transactionDto, 'chega aq cagado');
     const transaction = this.transactionRepository.create(transactionDto);
     return this.save(transaction);
   }
